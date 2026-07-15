@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net9.0-windows</TargetFramework>
+    <UseWPF>true</UseWPF>
+    <UseWindowsForms>true</UseWindowsForms>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <RootNamespace>AgentLiveWidget</RootNamespace>
+    <AssemblyName>AgentLiveWidget</AssemblyName>
+    <Version>1.0.0</Version>
+    <Product>Agent Live Widget</Product>
+    <Description>Always-on-top live status widget for Claude Code sessions.</Description>
+  </PropertyGroup>
+
+</Project>

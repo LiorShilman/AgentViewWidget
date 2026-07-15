@@ -1,0 +1,17 @@
+# .NET / WPF build output
+widget/bin/
+widget/obj/
+widget/.vs/
+
+# Node
+server/node_modules/
+npm-debug.log*
+
+# Editor / OS
+.vs/
+.vscode/
+*.user
+Thumbs.db
+
+# Claude Code runtime state (session-local, not project source)
+.claude/scheduled_tasks.lock
