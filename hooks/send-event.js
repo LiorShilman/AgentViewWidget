@@ -88,7 +88,7 @@ process.stdin.on('end', () => {
       payload.lastResponse = String(event.last_assistant_message || '').slice(0, 300);
       break;
     case 'SessionEnd':
-      payload.reason = event.reason || null;
+      payload.reason = event.reason ? String(event.reason).slice(0, 100) : null;
       break;
   }
 

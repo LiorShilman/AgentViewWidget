@@ -26,6 +26,7 @@ function initialProjectState() {
     recentEvents: [], // [{ type, label, timestamp }] newest first
     filesTouched: [], // [filePath] most-recently-touched first, deduplicated
     projectPath: null,
+    git: null, // { branch, changedCount } | null — refreshed by a background poll, not hooks
     lastMemorySaveAt: null, // bumped whenever a Write/Edit targets a memory/ folder
     lastEventAt: null,
   };
@@ -98,8 +99,12 @@ function reduceProject(state, ev) {
 
     case 'UserPromptSubmit': {
       state.status = 'thinking';
-      state.lastPrompt = ev.prompt || null;
-      pushEvent(state, ev.type, '❯', truncate(ev.prompt, 60), ts);
+      // Claude Code's hook payload has no attachment/image field at all — a
+      // prompt that's only an image (no typed text) arrives as an empty
+      // string, indistinguishable from "nothing happened" unless we say so.
+      const hasText = ev.prompt && ev.prompt.trim().length > 0;
+      state.lastPrompt = hasText ? ev.prompt : '(no text — likely an image/attachment)';
+      pushEvent(state, ev.type, '❯', hasText ? truncate(ev.prompt, 60) : 'Prompt submitted (no text)', ts);
       break;
     }
 
@@ -194,7 +199,7 @@ function reduceProject(state, ev) {
       state.status = 'offline';
       state.currentTool = null;
       state.sessionStartedAt = null;
-      pushEvent(state, ev.type, '●', 'Session ended', ts);
+      pushEvent(state, ev.type, '●', ev.reason ? `Session ended · ${ev.reason}` : 'Session ended', ts);
       break;
     }
 
@@ -217,6 +222,10 @@ function createStore() {
 
 /** Ingests one event into the store, creating/evicting projects as needed. */
 function ingest(store, ev) {
+  // Without a cwd there's no project to attribute this to — surfacing it as
+  // a ghost "unknown" tab would just confuse the widget, so drop it.
+  if (!ev.cwd) return store;
+
   const key = normalizeKey(ev.cwd);
   let project = store.projects.get(key);
   if (!project) {

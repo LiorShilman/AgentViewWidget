@@ -84,11 +84,35 @@
                     </Grid>
 
                     <StackPanel Grid.Column="1" Margin="10,0,8,0" VerticalAlignment="Center">
-                        <TextBlock x:Name="ProjectNameText"
-                                   Text="Agent Live"
-                                   FontSize="13" FontWeight="SemiBold"
-                                   Foreground="{StaticResource TextPrimaryBrush}"
-                                   TextTrimming="CharacterEllipsis"/>
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock x:Name="ProjectNameText"
+                                       Text="Agent Live"
+                                       FontSize="13" FontWeight="SemiBold"
+                                       Foreground="{StaticResource TextPrimaryBrush}"
+                                       TextTrimming="CharacterEllipsis"/>
+                            <Border x:Name="GitBadge"
+                                    Visibility="Collapsed"
+                                    CornerRadius="5"
+                                    Background="{StaticResource CardBrush}"
+                                    BorderBrush="{StaticResource CardBorderBrush}"
+                                    BorderThickness="1"
+                                    Padding="5,1,5,1"
+                                    Margin="6,1,0,0"
+                                    VerticalAlignment="Center">
+                                <StackPanel Orientation="Horizontal">
+                                    <Ellipse x:Name="GitBadgeDot"
+                                             Width="6" Height="6"
+                                             Margin="0,0,4,0"
+                                             VerticalAlignment="Center"
+                                             Fill="{StaticResource TextSecondaryBrush}"/>
+                                    <TextBlock x:Name="GitBadgeText"
+                                               Text="main"
+                                               FontSize="9.5"
+                                               FontFamily="Cascadia Mono, Consolas"
+                                               Foreground="{StaticResource TextSecondaryBrush}"/>
+                                </StackPanel>
+                            </Border>
+                        </StackPanel>
                         <TextBlock x:Name="StatusText"
                                    Text="Offline"
                                    FontSize="11"

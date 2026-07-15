@@ -15,3 +15,6 @@ Thumbs.db
 
 # Claude Code runtime state (session-local, not project source)
 .claude/scheduled_tasks.lock
+
+# Ad-hoc debug artifacts
+hooks/debug-*.log

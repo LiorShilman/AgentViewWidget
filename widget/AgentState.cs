@@ -50,6 +50,18 @@ public sealed class AgentState
 
     [JsonPropertyName("lastMemorySaveAt")]
     public long? LastMemorySaveAt { get; set; }
+
+    [JsonPropertyName("git")]
+    public GitInfo? Git { get; set; }
+}
+
+public sealed class GitInfo
+{
+    [JsonPropertyName("branch")]
+    public string Branch { get; set; } = "";
+
+    [JsonPropertyName("changedCount")]
+    public int ChangedCount { get; set; }
 }
 
 public sealed class CurrentTool

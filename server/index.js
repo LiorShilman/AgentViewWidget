@@ -14,9 +14,11 @@
 const http = require('http');
 const { WebSocketServer } = require('ws');
 const { createStore, ingest, applyWatchdog, publicSnapshot } = require('./state');
+const { getGitStatus } = require('./git-status');
 
 const PORT = 4577;
 const WATCHDOG_IDLE_MS = 5 * 60 * 1000; // no events for 5 min -> idle
+const GIT_POLL_MS = 8 * 1000;
 
 const store = createStore();
 
@@ -101,6 +103,32 @@ setInterval(() => {
     broadcast();
   }
 }, 30 * 1000);
+
+// Git status: read-only, best-effort, polled rather than hook-driven (no
+// hook fires on a git commit/checkout). Guarded against overlapping runs so
+// a slow repo on one tick can't pile up concurrent `git` processes.
+let gitPollInFlight = false;
+setInterval(async () => {
+  if (gitPollInFlight || store.projects.size === 0) return;
+  gitPollInFlight = true;
+  try {
+    let changed = false;
+    for (const project of store.projects.values()) {
+      const next = await getGitStatus(project.projectPath);
+      const prev = project.git;
+      const same =
+        (next === null && prev === null) ||
+        (next && prev && next.branch === prev.branch && next.changedCount === prev.changedCount);
+      if (!same) {
+        project.git = next;
+        changed = true;
+      }
+    }
+    if (changed) broadcast();
+  } finally {
+    gitPollInFlight = false;
+  }
+}, GIT_POLL_MS);
 
 server.on('error', (err) => {
   if (err.code === 'EADDRINUSE') {

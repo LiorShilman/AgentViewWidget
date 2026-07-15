@@ -52,10 +52,13 @@ public sealed class EventItem : INotifyPropertyChanged
     // Mirrors the status palette used by the energy core / status dot, so the
     // log reads as an extension of the same color language rather than a
     // flat, undifferentiated list.
+    // Cyan/green and indigo/violet used to sit too close together on the
+    // color wheel to tell apart at 11px — swapped for hues far enough apart
+    // to read instantly even for the two most frequent icons (▶ and ✓).
     private static readonly Brush GreenBrush = Freeze(0x34, 0xD3, 0x99);   // idle / success
     private static readonly Brush VioletBrush = Freeze(0xA7, 0x8B, 0xFA); // thinking
-    private static readonly Brush IndigoBrush = Freeze(0x81, 0x8C, 0xF8); // memory save
-    private static readonly Brush CyanBrush = Freeze(0x22, 0xD3, 0xEE);   // running tool
+    private static readonly Brush PinkBrush = Freeze(0xF4, 0x72, 0xB6);   // memory save
+    private static readonly Brush BlueBrush = Freeze(0x60, 0xA5, 0xFA);   // running tool
     private static readonly Brush AmberBrush = Freeze(0xFB, 0xBF, 0x24); // waiting approval
     private static readonly Brush OrangeBrush = Freeze(0xF5, 0x9E, 0x0B); // context warning
     private static readonly Brush RedBrush = Freeze(0xF8, 0x71, 0x71);   // offline
@@ -71,9 +74,9 @@ public sealed class EventItem : INotifyPropertyChanged
     private static Brush ColorFor(string type, string icon) => icon switch
     {
         "❯" => VioletBrush,
-        "▶" => CyanBrush,
+        "▶" => BlueBrush,
         "✓" => GreenBrush,
-        "✦" => IndigoBrush,
+        "✦" => PinkBrush,
         "◆" => AmberBrush,
         "⚠" => OrangeBrush,
         "✗" => RedBrush,

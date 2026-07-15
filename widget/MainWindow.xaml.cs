@@ -56,7 +56,7 @@ public partial class MainWindow : Window
     {
         ["idle"] = new(Color.FromRgb(0x34, 0xD3, 0x99), "Idle"),
         ["thinking"] = new(Color.FromRgb(0xA7, 0x8B, 0xFA), "Thinking…"),
-        ["running_tool"] = new(Color.FromRgb(0x22, 0xD3, 0xEE), "Running tool"),
+        ["running_tool"] = new(Color.FromRgb(0x60, 0xA5, 0xFA), "Running tool"),
         ["waiting_approval"] = new(Color.FromRgb(0xFB, 0xBF, 0x24), "Waiting for approval"),
         ["offline"] = new(Color.FromRgb(0xF8, 0x71, 0x71), "Offline"),
     };
@@ -307,6 +307,28 @@ public partial class MainWindow : Window
         ProjectNameText.Text = string.IsNullOrEmpty(state.ProjectPath)
             ? "Agent Live"
             : Path.GetFileName(state.ProjectPath.TrimEnd('\\', '/'));
+
+        // Git branch + dirty count (best-effort; absent for non-repos). A
+        // colored dot carries the clean/dirty signal — green vs. amber reads
+        // instantly, the same language used by every other status indicator
+        // in this widget, rather than relying on subtle text/border shifts.
+        if (state.Git is { } git)
+        {
+            bool dirty = git.ChangedCount > 0;
+            GitBadgeText.Text = dirty ? $"{git.Branch} · {git.ChangedCount}" : git.Branch;
+            var dotBrush = new SolidColorBrush(dirty
+                ? Color.FromRgb(0xFB, 0xBF, 0x24)
+                : Color.FromRgb(0x34, 0xD3, 0x99));
+            GitBadgeDot.Fill = dotBrush;
+            GitBadge.BorderBrush = dirty
+                ? new SolidColorBrush(Color.FromArgb(0x55, 0xFB, 0xBF, 0x24))
+                : (Brush)FindResource("CardBorderBrush");
+            GitBadge.Visibility = Visibility.Visible;
+        }
+        else
+        {
+            GitBadge.Visibility = Visibility.Collapsed;
+        }
 
         // Current activity
         if (state.CurrentTool is { } tool)
