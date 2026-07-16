@@ -51,7 +51,7 @@
 
         <!-- ================= EXPANDED CARD ================= -->
         <Border x:Name="ExpandedRoot"
-                Width="420"
+                Width="500"
                 CornerRadius="16"
                 BorderThickness="1"
                 BorderBrush="{StaticResource PanelBorderBrush}"
@@ -236,6 +236,39 @@
                                VerticalAlignment="Top"/>
                 </Grid>
 
+                <!-- Last command output (hidden until a Bash call produces one) -->
+                <Border x:Name="OutputSection"
+                        Margin="0,10,0,0"
+                        CornerRadius="10"
+                        Background="{StaticResource CardBrush}"
+                        BorderBrush="{StaticResource CardBorderBrush}"
+                        BorderThickness="1"
+                        Padding="12,10"
+                        Visibility="Collapsed">
+                    <StackPanel>
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="$"
+                                       FontSize="11" FontWeight="Bold"
+                                       FontFamily="Cascadia Mono, Consolas"
+                                       Foreground="{StaticResource TextTertiaryBrush}"
+                                       Margin="0,0,6,0"/>
+                            <TextBlock Text="OUTPUT"
+                                       FontSize="9" FontWeight="SemiBold"
+                                       Foreground="{StaticResource TextTertiaryBrush}"
+                                       VerticalAlignment="Center"/>
+                        </StackPanel>
+                        <TextBlock x:Name="OutputText"
+                                   FontSize="11"
+                                   FontFamily="Cascadia Mono, Consolas"
+                                   Foreground="{StaticResource TextSecondaryBrush}"
+                                   TextWrapping="Wrap"
+                                   TextTrimming="CharacterEllipsis"
+                                   MaxHeight="90"
+                                   LineHeight="18"
+                                   Margin="0,8,0,0"/>
+                    </StackPanel>
+                </Border>
+
                 <!-- Files changed this session (hidden until at least one file is touched) -->
                 <StackPanel x:Name="FilesChangedSection" Margin="2,13,0,0" Visibility="Collapsed">
                     <TextBlock x:Name="FilesChangedLabel"
@@ -325,7 +358,8 @@
                                                    Foreground="{StaticResource TextPrimaryBrush}"
                                                    Opacity="0.85"
                                                    Margin="6,0,0,0"
-                                                   TextTrimming="CharacterEllipsis"/>
+                                                   TextTrimming="CharacterEllipsis"
+                                                   ToolTip="{Binding Label}"/>
                                         <TextBlock Grid.Column="2"
                                                    Text="{Binding TimeAgo}"
                                                    FontSize="10"

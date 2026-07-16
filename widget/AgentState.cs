@@ -33,6 +33,9 @@ public sealed class AgentState
     [JsonPropertyName("lastResponse")]
     public string? LastResponse { get; set; }
 
+    [JsonPropertyName("lastOutput")]
+    public string? LastOutput { get; set; }
+
     [JsonPropertyName("sessionStartedAt")]
     public long? SessionStartedAt { get; set; }
 

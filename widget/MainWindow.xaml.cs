@@ -50,6 +50,26 @@ public partial class MainWindow : Window
     private bool _pulseRunning;
     private bool _memPulseRunning;
 
+    // Below the server's 5-minute hard watchdog (which force-resets to idle),
+    // this just flags "no update in a while" on a project that should still
+    // be active — an early, non-destructive warning, not a state change.
+    private const long StaleThresholdMs = 90_000;
+
+    private static bool IsStale(AgentState project)
+    {
+        if (project.Status is not ("thinking" or "running_tool" or "waiting_approval")) return false;
+        if (project.RecentEvents.Count == 0) return false;
+        var ageMs = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() - project.RecentEvents[0].Timestamp;
+        return ageMs > StaleThresholdMs;
+    }
+
+    private static string StaleAge(AgentState project)
+    {
+        var ageMs = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() - project.RecentEvents[0].Timestamp;
+        var minutes = (int)(ageMs / 60_000);
+        return minutes >= 1 ? $"{minutes}m" : $"{ageMs / 1000}s";
+    }
+
     private sealed record StatusStyle(Color Color, string Label);
 
     private static readonly Dictionary<string, StatusStyle> StatusStyles = new()
@@ -197,6 +217,8 @@ public partial class MainWindow : Window
                 ? "…"
                 : Path.GetFileName(project.ProjectPath.TrimEnd('\\', '/'));
 
+            bool stale = IsStale(project);
+
             var stack = new StackPanel { Orientation = Orientation.Horizontal };
             stack.Children.Add(new Ellipse
             {
@@ -214,6 +236,18 @@ public partial class MainWindow : Window
                 Foreground = (Brush)FindResource(isSelected ? "TextPrimaryBrush" : "TextSecondaryBrush"),
                 FontWeight = isSelected ? FontWeights.SemiBold : FontWeights.Normal,
             });
+            if (stale)
+            {
+                stack.Children.Add(new TextBlock
+                {
+                    Text = "⚠",
+                    Margin = new Thickness(5, 0, 0, 0),
+                    FontSize = 10,
+                    VerticalAlignment = VerticalAlignment.Center,
+                    Foreground = new SolidColorBrush(Color.FromRgb(0xF5, 0x9E, 0x0B)),
+                    ToolTip = $"No update in {StaleAge(project)} — might be stuck",
+                });
+            }
 
             var border = new Border
             {
@@ -356,6 +390,18 @@ public partial class MainWindow : Window
         ResponseText.Text = string.IsNullOrWhiteSpace(state.LastResponse) ? "No response yet" : state.LastResponse;
         ResponseText.ToolTip = string.IsNullOrWhiteSpace(state.LastResponse) ? null : state.LastResponse;
 
+        // Last command output (Bash only) — hidden until there's something to show
+        if (string.IsNullOrWhiteSpace(state.LastOutput))
+        {
+            OutputSection.Visibility = Visibility.Collapsed;
+        }
+        else
+        {
+            OutputText.Text = state.LastOutput;
+            OutputText.ToolTip = state.LastOutput;
+            OutputSection.Visibility = Visibility.Visible;
+        }
+
         // Files changed this session
         RenderFilesChanged(state.FilesTouched);
 
@@ -465,7 +511,7 @@ public partial class MainWindow : Window
             : Color.FromRgb(0x34, 0xD3, 0x99));
         MemFill.Background = (Brush)FindResource(high ? "MemHighBrush" : "MemNormalBrush");
 
-        var trackWidth = MemTrack.ActualWidth > 0 ? MemTrack.ActualWidth : 384;
+        var trackWidth = MemTrack.ActualWidth > 0 ? MemTrack.ActualWidth : 464;
         var target = trackWidth * (high ? 0.94 : 0.28);
         MemFill.BeginAnimation(WidthProperty,
             new DoubleAnimation(target, TimeSpan.FromMilliseconds(450))
@@ -602,6 +648,23 @@ public partial class MainWindow : Window
         {
             item.UpdateTimeAgo();
         }
+
+        // Staleness crosses its threshold purely with the passage of time, so
+        // it's re-evaluated every tick rather than only on new snapshots.
+        if (_connected && IsStale(_state))
+        {
+            var baseLabel = StatusStyles.TryGetValue(_state.Status, out var s) ? s.Label : _state.Status;
+            StatusText.Text = $"{baseLabel} · stale {StaleAge(_state)}";
+            StatusText.Foreground = new SolidColorBrush(Color.FromRgb(0xF5, 0x9E, 0x0B));
+        }
+        else if (_connected)
+        {
+            var style = StatusStyles.TryGetValue(_state.Status, out var s) ? s : StatusStyles["offline"];
+            StatusText.Text = style.Label;
+            StatusText.Foreground = (Brush)FindResource("TextSecondaryBrush");
+        }
+
+        RenderTabs();
     }
 
     // ===== helpers =====

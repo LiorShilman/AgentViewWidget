@@ -64,6 +64,16 @@ process.stdin.on('end', () => {
         (event.tool_name === 'Write' || event.tool_name === 'Edit') &&
         typeof payload.filePath === 'string' &&
         /[\\/]memory[\\/]/i.test(payload.filePath);
+      // Short, privacy-truncated output preview — Bash only. Other tools'
+      // "output" tends to just restate file content, which we never forward;
+      // a shell command's stdout/stderr is closer to "what Claude found out"
+      // than "your private data," and is capped the same way prompts are.
+      if (EVENT_TYPE === 'PostToolUse' && event.tool_name === 'Bash') {
+        const r = event.tool_response;
+        const text = r && typeof r === 'object' ? String(r.stdout || r.stderr || '') : '';
+        const cleaned = text.replace(/\s+/g, ' ').trim();
+        payload.output = cleaned ? cleaned.slice(0, 150) : null;
+      }
       break;
     case 'PostToolUseFailure':
       // PostToolUse only fires on success — a failed tool call raises this

@@ -21,6 +21,7 @@ function initialProjectState() {
     currentTool: null, // { name, filePath, startedAt }
     lastPrompt: null,
     lastResponse: null,
+    lastOutput: null, // most recent Bash stdout/stderr preview (150 chars, hook-truncated)
     sessionStartedAt: null,
     memoryPressure: 'normal', // normal | high
     recentEvents: [], // [{ type, label, timestamp }] newest first
@@ -148,11 +149,16 @@ function reduceProject(state, ev) {
         touchFile(state, ev.filePath);
       }
 
+      if (ev.output) {
+        state.lastOutput = ev.output;
+      }
+
+      const outputSnippet = ev.output ? ` — ${truncate(ev.output, 100)}` : '';
       pushEvent(
         state,
         ev.type,
         '✓',
-        target ? `${ev.toolName} · ${target}${durationLabel}` : `${ev.toolName}${durationLabel}`,
+        (target ? `${ev.toolName} · ${target}${durationLabel}` : `${ev.toolName}${durationLabel}`) + outputSnippet,
         ts
       );
       break;
