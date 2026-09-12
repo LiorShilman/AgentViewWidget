@@ -219,18 +219,10 @@ public partial class MainWindow : Window
 
             bool stale = IsStale(project);
 
-            var stack = new StackPanel { Orientation = Orientation.Horizontal };
-            stack.Children.Add(new Ellipse
-            {
-                Width = 7,
-                Height = 7,
-                Fill = new SolidColorBrush(accent),
-                VerticalAlignment = VerticalAlignment.Center,
-            });
-            stack.Children.Add(new TextBlock
+            var nameRow = new StackPanel { Orientation = Orientation.Horizontal };
+            nameRow.Children.Add(new TextBlock
             {
                 Text = name,
-                Margin = new Thickness(6, 0, 0, 0),
                 FontSize = 10.5,
                 VerticalAlignment = VerticalAlignment.Center,
                 Foreground = (Brush)FindResource(isSelected ? "TextPrimaryBrush" : "TextSecondaryBrush"),
@@ -238,7 +230,7 @@ public partial class MainWindow : Window
             });
             if (stale)
             {
-                stack.Children.Add(new TextBlock
+                nameRow.Children.Add(new TextBlock
                 {
                     Text = "⚠",
                     Margin = new Thickness(5, 0, 0, 0),
@@ -248,6 +240,33 @@ public partial class MainWindow : Window
                     ToolTip = $"No update in {StaleAge(project)} — might be stuck",
                 });
             }
+
+            // Live one-line activity summary, so every project's status reads at a
+            // glance from the tab bar itself — no need to select each tab in turn.
+            var activity = GetActivitySummary(project, style);
+
+            var textStack = new StackPanel { Orientation = Orientation.Vertical, MaxWidth = 150 };
+            textStack.Children.Add(nameRow);
+            textStack.Children.Add(new TextBlock
+            {
+                Text = activity,
+                FontSize = 9,
+                Margin = new Thickness(0, 1, 0, 0),
+                Foreground = (Brush)FindResource("TextTertiaryBrush"),
+                TextTrimming = TextTrimming.CharacterEllipsis,
+                ToolTip = activity,
+            });
+
+            var stack = new StackPanel { Orientation = Orientation.Horizontal };
+            stack.Children.Add(new Ellipse
+            {
+                Width = 7,
+                Height = 7,
+                Fill = new SolidColorBrush(accent),
+                VerticalAlignment = VerticalAlignment.Center,
+            });
+            stack.Children.Add(new Border { Width = 6 }); // spacer
+            stack.Children.Add(textStack);
 
             var border = new Border
             {
@@ -270,6 +289,17 @@ public partial class MainWindow : Window
 
             TabsPanel.Children.Add(border);
         }
+    }
+
+    /// <summary>One-line "what's this project doing right now" summary for the tab bar.</summary>
+    private static string GetActivitySummary(AgentState project, StatusStyle style)
+    {
+        if (project.Status == "running_tool" && project.CurrentTool is { } tool)
+        {
+            var file = string.IsNullOrEmpty(tool.FilePath) ? null : Path.GetFileName(tool.FilePath);
+            return file is null ? tool.Name : $"{tool.Name} · {file}";
+        }
+        return style.Label;
     }
 
     private void TabBorder_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)

@@ -25,7 +25,7 @@ Claude Code (hooks) ──HTTP──▶ State Server (localhost:4577) ──WebS
 ```powershell
 cd server && npm install     # פעם אחת בלבד
 cd ..\widget && dotnet build -c Release
-.\bin\Release\net9.0-windows\AgentLiveWidget.exe
+.\bin\Release\net10.0-windows\AgentLiveWidget.exe
 ```
 
 **אין צורך להריץ את השרת בנפרד** — הווידג'ט בודק אם הוא כבר רץ על `localhost:4577`, ואם לא, מריץ אותו בעצמו (`ServerLauncher.cs`). אם השרת קורס תוך כדי ריצה הווידג'ט גם ינסה להפעיל אותו מחדש אוטומטית.
@@ -34,11 +34,21 @@ cd ..\widget && dotnet build -c Release
 
 ### חיבור פרויקט למעקב
 
-ה-hooks כבר רשומים לפרויקט הזה ב-[.claude/settings.json](.claude/settings.json).
-כדי לעקוב אחרי פרויקט **נוסף** (במקביל — כל פרויקט מקבל טאב משלו בווידג'ט):
+**כדי שכל פרויקט חדש ייכלל אוטומטית, בלי הרצה ידנית** — מריצים את הסקריפט פעם אחת בלבד
+מול תיקיית הבית (`%USERPROFILE%`), כדי שהוא ימזג את ה-hooks לתוך ה-**global settings** של
+Claude Code (`~/.claude/settings.json`) במקום settings.json של פרויקט בודד:
 
 ```powershell
-node "e:/AllMyProjects/AgentLiveWidget/hooks/attach-project.js" "<נתיב-לפרויקט>"
+node "C:/AllMyProjetcs/AgentLiveWidget/hooks/attach-project.js" "$env:USERPROFILE"
+```
+
+global settings חלים על **כל** session שנפתח, בכל פרויקט — קיים או עתידי — בלי צורך לחזור
+ולהריץ את הסקריפט שוב לכל פרויקט חדש. זה כבר בוצע פעם אחת במחשב הזה.
+
+לחלופין, אפשר עדיין לחבר **פרויקט בודד** בלבד (למשל אם רוצים לעקוב רק אחרי חלק מהפרויקטים):
+
+```powershell
+node "C:/AllMyProjetcs/AgentLiveWidget/hooks/attach-project.js" "<נתיב-לפרויקט>"
 ```
 
 הסקריפט יוצר את `.claude/settings.json` אם הוא לא קיים, וממזג לתוכו את שמונת ה-hooks של הווידג'ט
