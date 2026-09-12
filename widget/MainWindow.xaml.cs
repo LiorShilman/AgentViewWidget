@@ -224,7 +224,6 @@ public partial class MainWindow : Window
             {
                 Text = name,
                 FontSize = 10.5,
-                MaxWidth = 170,
                 TextTrimming = TextTrimming.CharacterEllipsis,
                 VerticalAlignment = VerticalAlignment.Center,
                 Foreground = (Brush)FindResource(isSelected ? "TextPrimaryBrush" : "TextSecondaryBrush"),
@@ -248,35 +247,42 @@ public partial class MainWindow : Window
             // glance from the tab bar itself — no need to select each tab in turn.
             var activity = GetActivitySummary(project, style);
 
-            var textStack = new StackPanel { Orientation = Orientation.Vertical, MaxWidth = 190 };
+            var textStack = new StackPanel { Orientation = Orientation.Vertical, VerticalAlignment = VerticalAlignment.Center };
             textStack.Children.Add(nameRow);
             textStack.Children.Add(new TextBlock
             {
                 Text = activity,
                 FontSize = 9,
-                MaxWidth = 190,
                 Margin = new Thickness(0, 1, 0, 0),
                 Foreground = (Brush)FindResource("TextTertiaryBrush"),
                 TextTrimming = TextTrimming.CharacterEllipsis,
                 ToolTip = activity,
             });
 
-            var stack = new StackPanel { Orientation = Orientation.Horizontal };
-            stack.Children.Add(new Ellipse
+            // A Grid — not a WrapPanel chip — so the text column stretches to the
+            // whole card width instead of being capped to fit several tabs per row.
+            var row = new Grid();
+            row.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+            row.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+
+            var dot = new Ellipse
             {
                 Width = 7,
                 Height = 7,
+                Margin = new Thickness(0, 0, 8, 0),
                 Fill = new SolidColorBrush(accent),
                 VerticalAlignment = VerticalAlignment.Center,
-            });
-            stack.Children.Add(new Border { Width = 6 }); // spacer
-            stack.Children.Add(textStack);
+            };
+            Grid.SetColumn(dot, 0);
+            Grid.SetColumn(textStack, 1);
+            row.Children.Add(dot);
+            row.Children.Add(textStack);
 
             var border = new Border
             {
-                CornerRadius = new CornerRadius(12),
-                Padding = new Thickness(9, 4, 10, 4),
-                Margin = new Thickness(0, 0, 6, 6),
+                CornerRadius = new CornerRadius(10),
+                Padding = new Thickness(10, 6, 10, 6),
+                Margin = new Thickness(0, 0, 0, 6),
                 Cursor = Cursors.Hand,
                 BorderThickness = new Thickness(1),
                 BorderBrush = isSelected
@@ -287,7 +293,7 @@ public partial class MainWindow : Window
                     : (Brush)FindResource("CardBrush"),
                 Tag = project.Key,
                 ToolTip = project.ProjectPath,
-                Child = stack,
+                Child = row,
             };
             border.MouseLeftButtonDown += TabBorder_MouseLeftButtonDown;
 

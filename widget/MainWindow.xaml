@@ -155,9 +155,11 @@
                     </StackPanel>
                 </Grid>
 
-                <!-- Project tabs (shown only when tracking more than one project) -->
-                <WrapPanel x:Name="TabsPanel"
-                           Orientation="Horizontal"
+                <!-- Project tabs (shown only when tracking more than one project) —
+                     one full-width row per project, so names/activity get the whole
+                     card's width instead of being squeezed into a wrapping chip. -->
+                <StackPanel x:Name="TabsPanel"
+                           Orientation="Vertical"
                            Margin="0,10,0,0"
                            Visibility="Collapsed"/>
 
