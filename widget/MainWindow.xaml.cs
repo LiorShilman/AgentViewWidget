@@ -224,9 +224,12 @@ public partial class MainWindow : Window
             {
                 Text = name,
                 FontSize = 10.5,
+                MaxWidth = 170,
+                TextTrimming = TextTrimming.CharacterEllipsis,
                 VerticalAlignment = VerticalAlignment.Center,
                 Foreground = (Brush)FindResource(isSelected ? "TextPrimaryBrush" : "TextSecondaryBrush"),
                 FontWeight = isSelected ? FontWeights.SemiBold : FontWeights.Normal,
+                ToolTip = name,
             });
             if (stale)
             {
@@ -245,12 +248,13 @@ public partial class MainWindow : Window
             // glance from the tab bar itself — no need to select each tab in turn.
             var activity = GetActivitySummary(project, style);
 
-            var textStack = new StackPanel { Orientation = Orientation.Vertical, MaxWidth = 150 };
+            var textStack = new StackPanel { Orientation = Orientation.Vertical, MaxWidth = 190 };
             textStack.Children.Add(nameRow);
             textStack.Children.Add(new TextBlock
             {
                 Text = activity,
                 FontSize = 9,
+                MaxWidth = 190,
                 Margin = new Thickness(0, 1, 0, 0),
                 Foreground = (Brush)FindResource("TextTertiaryBrush"),
                 TextTrimming = TextTrimming.CharacterEllipsis,
