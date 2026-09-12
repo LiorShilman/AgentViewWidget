@@ -2,9 +2,13 @@
 
 /**
  * Multi-project in-memory state store + event reducer.
- * Tracks one AgentState per project (keyed by normalized cwd) so the widget
- * can show a tab per project. Mirrors the shapes consumed by the WPF widget.
+ * Tracks one AgentState per project (keyed by its resolved git root, falling
+ * back to normalized cwd) so the widget can show a tab per project. Mirrors
+ * the shapes consumed by the WPF widget.
  */
+
+const fs = require('fs');
+const path = require('path');
 
 const MAX_EVENTS = 20;
 const MAX_PROJECTS = 6;
@@ -49,6 +53,34 @@ function baseName(p) {
 function normalizeKey(cwd) {
   if (!cwd) return 'unknown';
   return String(cwd).replace(/\\/g, '/').replace(/\/+$/, '').toLowerCase();
+}
+
+/**
+ * Walks up from `cwd` looking for a `.git` entry (a directory for a normal
+ * repo, a file for a worktree/submodule) so a hook fired from a subdirectory
+ * (e.g. a `widget/` build folder) is attributed to the same project as one
+ * fired from the repo root, instead of spawning a separate "ghost" tab.
+ * Falls back to the original cwd, untouched, when no `.git` is found —
+ * e.g. a project that isn't a git repo at all.
+ */
+function resolveProjectRoot(cwd) {
+  if (!cwd) return cwd;
+  let dir;
+  try {
+    dir = path.resolve(String(cwd));
+  } catch {
+    return cwd;
+  }
+  const { root } = path.parse(dir);
+  while (true) {
+    try {
+      if (fs.existsSync(path.join(dir, '.git'))) return dir;
+    } catch {
+      return cwd; // permission error or similar — don't fail the event over it
+    }
+    if (dir === root) return cwd; // reached filesystem root, no .git found
+    dir = path.dirname(dir);
+  }
 }
 
 function pushEvent(state, type, icon, label, timestamp) {
@@ -232,14 +264,18 @@ function ingest(store, ev) {
   // a ghost "unknown" tab would just confuse the widget, so drop it.
   if (!ev.cwd) return store;
 
-  const key = normalizeKey(ev.cwd);
+  const projectRoot = resolveProjectRoot(ev.cwd);
+  const key = normalizeKey(projectRoot);
   let project = store.projects.get(key);
   if (!project) {
     project = initialProjectState();
     store.projects.set(key, project);
   }
 
-  reduceProject(project, ev);
+  // Rewrite cwd to the resolved root so projectPath (and thus the tab's
+  // display name) reflects the project, not whatever subdirectory the hook
+  // happened to fire from.
+  reduceProject(project, projectRoot === ev.cwd ? ev : { ...ev, cwd: projectRoot });
   store.activeKey = key;
 
   if (store.projects.size > MAX_PROJECTS) {
@@ -293,6 +329,7 @@ module.exports = {
   applyWatchdog,
   publicSnapshot,
   normalizeKey,
+  resolveProjectRoot,
   MAX_EVENTS,
   MAX_PROJECTS,
 };
