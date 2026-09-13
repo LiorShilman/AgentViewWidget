@@ -304,7 +304,11 @@ public partial class MainWindow : Window
     /// <summary>One-line "what's this project doing right now" summary for the tab bar.</summary>
     private static string GetActivitySummary(AgentState project, StatusStyle style)
     {
-        if (project.Status == "running_tool" && project.CurrentTool is { } tool)
+        // currentTool stays populated through "thinking"/"waiting_approval" too
+        // (the last tool used, not cleared just because the turn moved on), so
+        // show it whenever we have it — the tab's status dot already carries
+        // the thinking/running/waiting distinction via its color.
+        if (project.CurrentTool is { } tool)
         {
             var file = string.IsNullOrEmpty(tool.FilePath) ? null : Path.GetFileName(tool.FilePath);
             return file is null ? tool.Name : $"{tool.Name} · {file}";
@@ -677,8 +681,12 @@ public partial class MainWindow : Window
             SessionTimeText.Text = "--:--";
         }
 
-        // Live tool elapsed time
-        if (_connected && _state.CurrentTool is { } tool)
+        // Live tool elapsed time — only while the tool is actually running.
+        // currentTool now stays populated through "thinking" too (the last
+        // tool used, kept as context instead of being blanked out), so this
+        // must gate on status too or it'd render as a still-ticking timer
+        // for a tool that already finished.
+        if (_connected && _state.Status == "running_tool" && _state.CurrentTool is { } tool)
         {
             var seconds = Math.Max(0, (now - tool.StartedAt) / 1000.0);
             ToolNameText.Text = seconds >= 1 ? $"{tool.Name} · {seconds:0}s" : tool.Name;

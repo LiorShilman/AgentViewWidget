@@ -167,7 +167,12 @@ function reduceProject(state, ev) {
           durationLabel = ` · ${seconds.toFixed(1)}s`;
         }
       }
-      state.currentTool = null;
+      // Keep currentTool around as "last tool used" instead of clearing it —
+      // thinking is a transient phase between tool calls, not a reset, and
+      // the widget should keep showing what just happened rather than
+      // blanking out to a generic "Thinking…" placeholder. The client gates
+      // its live elapsed-time counter on status === 'running_tool', so a
+      // stale startedAt here never renders as a still-ticking timer.
       state.status = 'thinking';
       const target = baseName(ev.filePath);
 
@@ -197,7 +202,8 @@ function reduceProject(state, ev) {
     }
 
     case 'PostToolUseFailure': {
-      state.currentTool = null;
+      // Same reasoning as PostToolUse — keep the last tool visible instead
+      // of blanking it out just because the turn moved into "thinking".
       state.status = 'thinking';
       const target = baseName(ev.filePath);
       const errorSnippet = ev.error ? ` — ${truncate(ev.error, 50)}` : '';
